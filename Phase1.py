@@ -464,3 +464,52 @@ def getDirectives():
                     data[d[0]] = d[1],d[2]
                     #print(data)
                     address_for_stored_variable = M.add_data(data[d[0]][0],data[d[0]][1])
+                                    data[d[0]] = address_for_stored_variable
+                    #print(data)
+            s = ''
+        else:
+            s += x
+    if(s.strip("\r\n") != '' or s.strip()!=''):  
+        # print("line :", s)
+        # print("textsegment=", textsegment)
+        s=s.strip()
+        if(textsegment == False and s.find(':')!=-1 and s.strip('\r\n')!='.data' and s.strip('\r\n')!='.text'):
+            s=s.strip()
+            d = s.split(":")
+            d[0]=d[0].strip()
+            d[1]=d[1].strip()
+            d.append(d[1][d[1].find(" ")::].strip())
+            d[1] = d[1][:d[1].find(" "):].strip()
+            d[2] = d[2].replace('"','')
+            #print(dd)
+            data[d[0]] = d[1],d[2]
+            #print(data)
+            address_for_stored_variable = M.add_data(data[d[0]][0],data[d[0]][1])
+            data[d[0]] = address_for_stored_variable
+            # ins.append(s)
+        elif(textsegment == True and s.find(':')==-1 and s.strip('\r\n')!='.data' and s.strip('\r\n')!='.text'):
+            ins.append(s)
+        elif(s.find(":") != -1 and textsegment == True and s.strip('\r\n')!='.data' and s.strip('\r\n')!='.text'):
+        #print( s[s.find(":")+1::])
+            labels[s[0: s.find(":"):].replace(" ",'')] = len(ins)
+            if(s[s.find(":")+1::].strip("\r\n").replace(" ","")!=''):
+                ins.append(s[s.find(":")+1::])
+            
+    #print(ins)
+    #print(labels)
+    # print(len(ins))
+    rf.close()
+    # print(ins)
+    for o in tocheck:
+        for k in labels.keys():
+            # print(o,k,labels[k])
+            if((labels[k])>=o):
+                labels[k]+=1
+                # print(o,k,labels[k])
+    return ins, labels , data
+M = Memory()
+instructions, labela,dataa = getDirectives() # returns list of instructions , labels , data (containing variable with address they point to)
+# print(dataa)
+data_out = M.show_Memory()
+convertToMC(instructions, labela,dataa,data_out)
+# M.show_Memory()
