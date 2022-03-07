@@ -78,3 +78,66 @@ class Memory:
             print("Unrecognized datatype directive",type)
             return
         	# return hex(int(myreturnvalue+268435456))
+    def get_data(s, add ):
+     
+        # print (self.data[hex(add & 0xffffffff).zfill(8)])
+        try:
+            return s.data[hex(add & 0xffffffff).zfill(8)]
+        except:
+            return '00'
+#Appending value to it    
+def add_text(s, val):
+        s.text.append(val)
+
+def Memo(s):
+        print("data segment---------------------------------------------------------------------------------------------------------\n", s.data)
+        data = []
+        '''
+        for x in range(len(self.data)):
+            # print(hex(268435456 + x)," ",self.data[x])
+            data_out.append( str(hex(268435456 + x))+ " : " + str(self.data[x]) )
+        '''
+        print("text segment"+"("+str(len(s.text))+")",
+              "---------------------------------------------------------------------------------------------------------\n", s.text, "\n\n")
+        return data
+#Making dictionaries for add slt sub addi lw sw beq bne bge jal for bubble sort
+dict3 = {
+    "add": "000", "slt": "010",  "sub": "000", "addi": "000",  "lw": "010", "sw": "010","beq": "000", "bne": "001", "bge": "101", "auipc": "",
+    "jal": ""
+}
+
+dict7 = {
+    "add": "0000000",  "slt": "0000000", "sub": "0100000"}
+
+dict_for = {
+    'add': 'r',  'slt': 'r', 'sub': 'r', 'addi': 'i',  'lw': 'i', 'sw': 's', 'beq': 'sb', 'bne': 'sb', 'bge': 'sb', 'auipc': 'u',
+    'jal': 'uj'
+}
+
+dict_opcode = {
+    'add': '0110011', 'slt': '0110011','sub': '0110011', 'addi': '0010011', 'lw': '0000011', 'sw': '0100011', 'beq': '1100011', 'bne': '1100011', 'bge': '1100011', 
+    'jal': '1101111' 
+    
+}
+
+# dict_labels = {}
+#Getting registers from string
+def get_reg(string):
+    if (string[0] == 'x'):
+        s1 = int(string[1::])
+        if (-1 < s1 and s1 < 32 ):
+            return format(s1, '05b')
+        else:
+            print ("Register not Identified. Assuming the register to be x0\n")
+            return -1
+    elif (string[0] == 'a'):
+        s1 = int(string[1::])
+        if ( -1 < s1 and s1 < 8):
+            return format(s1+10, '05b')
+        else:
+            print ("Register not Identified. Assuming the register to be a0\n")
+            return -1
+    else:
+        print ("Register not Identified. Assuming the register to be x0\n")
+        return -1
+
