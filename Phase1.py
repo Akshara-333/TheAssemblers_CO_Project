@@ -508,7 +508,7 @@ def getDirectives():
                 # print(o,k,labels[k])
     return ins, labels , data
 M = Memory()
-instructions, labela,dataa = getDirectives() # returns list of instructions , labels , data (containing variable with address they point to)
+instructions, labels,dataa = getDirectives() # returns list of instructions , labels , data (containing variable with address they point to)
 # print(dataa)
 data_out = M.show_Memory()
 convertToMC(instructions, labela,dataa,data_out)
