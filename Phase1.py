@@ -368,3 +368,99 @@ def get_command(l, pc, labels,data):
         #print(imm)
         mc = str(imm) + rd + opcode
         return '%#010x' % (int('0b'+mc, 0)),-1,l[0]+" "+l[1]+" "+str(tttt)+"   "
+
+    #Converting to MC
+def convertToMC(inst, labels,datas,data_out):
+    instAdd = 0
+    for x in inst:
+        # Switching format in case of {jalr x0,0(x1)} equating {jalr x0 x1 0}
+        flag = False
+        # print(x)
+        if(x.strip("\r\n") == "" or x.strip()==''):
+            print("no instruction here, a empty line encountered!")
+            continue
+        s = str(x)
+        s = s.strip("\r\n")
+        s = s.strip()
+        l = []
+        s = s.replace(",", " ")
+        s = s.replace(":", " ")
+        if (s.count('(') != 0):
+            flag = True
+            s = s.replace("(", " ")
+            s = s.replace(")", "")
+        l = s.split()
+        if (flag == True and len(l)==4) :
+            l[2], l[3] = l[3], l[2]
+            s = l[0]+" " + l[1] + " " + l[2] + " " + l[3]
+        Code1,Code2,basicCode = get_command(l, instAdd, labels,datas)
+        if (Code1 == -2 and Code2 == -2):
+            Code1 = Code2
+            msg = ''
+            for x in l:
+                msg = msg + x+" " 
+            print(", in the instruction",msg)
+            sys.exit()
+        else:
+            # print(l)
+            writefile.write(hex(instAdd) + "  \t:\t"+Code1 + "\n")
+            write2.write(hex(instAdd) +" "+Code1+" "+basicCode[:basicCode.find("$")].strip()+"\n")
+            M.add_text(Code1)
+            instAdd += 4
+            if(Code2!=-1):
+                writefile.write(hex(instAdd) + "  \t:\t"+Code2 + "\n")
+                write2.write(hex(instAdd) + " "+Code2+" "+basicCode[basicCode.find("$")+1:].strip() + "\n")
+                M.add_text(Code2)
+                instAdd+=4     
+    writefile.write("\n\nDATA_SEGMENT_OF_MCFILE\n{only the contents of memory locations that were explicity set by the program are shown}\n\n")
+    for k in range(len(data_out)):
+        writefile.write(data_out[k]+"\n")
+    writefile.close()
+def getDirectives():
+    rf = open("bubblesort.asm", "r")
+    file = rf.read()
+    s = ''
+    ins = []
+    textsegment = True
+    labels = {}
+    data = {}
+    tocheck = []
+    for x in file:
+        if(x == '\n'):
+            if(s.strip(" \r\n") != '' or s.strip()!=''):
+                # ins.append(s)
+                #print("line :", s)
+                if(s.find("#")!=-1):
+                    s=s[0:s.find('#'):]
+                if(s.strip() == '.data'):
+                    textsegment = False
+                    #ins.append(s)
+                elif(s.strip()== '.text'):
+                    textsegment = True
+                    #ins.append(s)
+                elif(s.find(":") != -1 and textsegment == True):
+                    # cuu = s[0:s.find(":"):].replace('\t', 'aa')
+                    labels[s[0: s.find(":"):].strip()] = len(ins)
+                    if(s[s.find(":")+1::].strip().replace(" ", "") != ''):
+                        ins.append(s[s.find(":")+1::])
+                elif(textsegment==True):
+                    ins.append(s)
+                    y = s
+                    y = y.replace(",",' ')
+                    y = y.strip()
+                    yy = y.split()
+                    if(len(yy)==3 and data.get(yy[2],-1)!=-1):
+                        tocheck.append(len(ins))
+                elif(textsegment==False):
+                    s=s.strip()
+                    d = s.split(":")
+                    d[0]=d[0].strip()
+                    d[1]=d[1].strip()
+                    d.append(d[1][d[1].find(" ")::].strip())
+                    
+                    d[1] = d[1][:d[1].find(" "):].strip()
+                    d[2] = d[2].replace('"','')
+                    #print(dd)
+                    data[d[0]] = d[1],d[2]
+                    #print(data)
+                    address_for_stored_variable = M.add_data(data[d[0]][0],data[d[0]][1])
