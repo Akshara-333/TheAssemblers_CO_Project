@@ -141,3 +141,77 @@ def get_reg(string):
         print ("Register not Identified. Assuming the register to be x0\n")
         return -1
 
+#Function for adding 12 bit immediate
+def imm12bit(string):
+    #print(string)
+    if(len(string) > 1):
+        if(string[0] == '0' and string[1] == 'x'):
+            if(len(string) > 5):
+                print ("Immediate value  must be 12 bit wide . Assuming the Immediate value as zero\n")
+                return ("000000000000")
+            else:
+                return bin(int(string[2::], 16))[2::].zfill(12)  # 33333
+   #being a hexadecimal number we need to convert it to a 12 bit value
+    #	n = int(string) - 2**12
+        elif (string[0] == '-'):  # eg.  -16
+            n = int(string[1::])
+            if (n<2049):
+                n = 2**12 - n
+                return (format(n, '012b'))
+            else:
+                print ("Immediate value  must be 12 bit wide. Assuming the Immediate value as zero\n")
+                return ("000000000000")
+        else:
+            check = int(string)
+            if (check < 2048):
+                return (format(int(string), '012b'))
+            else:
+                print ("Immediate value must be 12 bit wide . Assuming the Immediate value as zero\n")
+                return ("000000000000")
+    else:
+        if (len(string) == 1):
+            if (string[0] != '0' and string[0] != '1' and string[0] != '2' and string[0] != '3' and string[0] != '4' and string[0] != '5' and string[0] != '6' and string[0] != '7' and string[0] != '8' and string[0] != '9'):
+                print ("Immediate value must be a digit . Assuming the Immediate value as zero\n")
+                return ("000000000000")
+        check = int(string)
+        if (check < 2048):
+            return (format(int(string), '012b'))
+        else:
+            print ("Immediate value  must be 12 bit wide . Assuming the Immediate value as zero\n")
+            return ("000000000000")
+
+#Function for adding 20 bit immediate
+def imm20bit(string):
+    if(len(string) > 1):
+        if(string[0] == '0' and string[1] == 'x'):
+            if(len(string) > 7):
+                return ("Immediate value  must be 20 bit wide . Assuming the Immediate value as zero\n")
+                return ("00000000000000000000")
+            else:  # return  as it is
+                return bin(int(string[2::], 16))[2::].zfill(20)
+        elif(string[0] == '-'):
+            n = int(string[1::])
+            if (n < 524289):
+                n = 2**20 - n
+                return format(n, '020b')
+            else:
+                return ("Immediate value  must be 20 bit wide. Assuming the Immediate value as zero\n")
+                return ("00000000000000000000")
+        else:
+            big_check = int(string)
+            if (big_check < 524288):
+                return format(int(string), '020b')
+            else:
+                print ("Immediate value  must be 20 bit wide . Assuming the Immediate value as zero\n")
+                return ("00000000000000000000")
+    else:
+        if (len(string) == 1):
+            if (string[0] != '0' and string[0] != '1' and string[0] != '2' and string[0] != '3' and string[0] != '4' and string[0] != '5' and string[0] != '6' and string[0] != '7' and string[0] != '8' and string[0] != '9'):
+                print ("Immediate value must be a digit . Assuming the Immediate value as zero\n")
+                return ("00000000000000000000")
+        big_check = int(string)
+        if (big_check < 524288):
+            return format(int(string), '020b')
+        else:
+            print ("Immediate value  must be 20 bit wide . Assuming the Immediate value as zero\n")
+            return ("00000000000000000000")
