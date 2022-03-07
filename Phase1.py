@@ -215,3 +215,156 @@ def imm20bit(string):
         else:
             print ("Immediate value  must be 20 bit wide . Assuming the Immediate value as zero\n")
             return ("00000000000000000000")
+#Getting commands from labels and implementing them
+def get_command(l, pc, labels,data):
+    if(dict_for.get(l[0],-1)==-1):
+        print("incorrect command",l[0],end='')
+        return -2,-2,''
+    elif dict_for[l[0]] == 'r':
+        #If enough values {mc1,mc2 will be returned as -2,-2 if not}
+        e = 4
+        land = len(l)
+        if (land != e):
+            print ("Expected",e - 1,"arguments but received",land - 1,end='')
+            return -2,-2,''
+        f7 = dict7[l[0]]
+        f3 = dict3[l[0]]
+        rd = get_reg(l[1])
+        rs1 = get_reg(l[2])
+        rs2 = get_reg(l[3])
+        if(rd==-1 or rs1==-1 or rs2==-1):
+            print(" Undefined register in R-format instruction",l[0])
+            sys.exit()
+        opcode = dict_opcode[l[0]]
+        mc = f7 + rs2 + rs1 + f3 + rd + opcode
+        return '%#010x' % (int('0b'+mc, 0)),-1,l[0]+" "+l[1]+" "+l[2]+" "+l[3]+"   "
+    if(dict_for[l[0]] == 'i'):
+        opcode = dict_opcode[l[0]]
+        rd = get_reg(l[1])
+        f3 = dict3[l[0]]
+        if(opcode !='0000011'): #not a load instruction
+            rs1 = get_reg(l[2])
+            if(rs1==-1 or rd==-1):
+                print(" undefined register in load instruction",l[0])
+                sys.exit()
+            imm = imm12bit(l[3])
+        else: #load instruction
+            if(len(l)==4):
+                rs1 = get_reg(l[2])
+                if(rs1==-1 or rd==-1):
+                    print("undefined register in",l[0])
+                    sys.exit()
+                imm = imm12bit(str(l[3]))
+            elif(len(l)==3 and data.get(l[2],-1)!=-1): #load of a variable and variable is defined
+                new_l = ['auipc',l[1],'0x10000']
+                mc1 = get_command(new_l,pc,labels,data)
+                print(mc1[2])
+                pc+=4
+                print("value",data[l[2]])
+                new_l = [l[0],l[1],l[1],int(data[l[2]],16) - 268435456 - pc + 4] # load x1 , x1 , offset and offset = data[l[2]] - int(0x10000000) - pc 
+                # print(int(data[l[2]],16) - 268435456 - pc + 4)
+                mc2 = get_command(new_l,pc,labels,data)
+                # print(l)
+                return mc1[0],mc2[0],mc1[2]+" $ "+l[0]+" "+ l[1]+" " + str(int(data[l[2]],16) - 268435456 - pc + 4) +"("+l[1]+")"
+            else:
+                print("incorrect format for the instruction. either",l[2],"not defined")
+        # print(imm,rs1,f3,rd,opcode)
+        mc = imm + rs1 + f3 + rd + opcode
+        rep = str(l[0]) +" "+ str(l[1])+ " " +str(l[2])+ " " +str(l[3])+ "   "
+        if(opcode=='0000011'):
+            rep = str(l[0])+" "+str(l[1])+" "+str(l[3])+"("+l[2]+")   "
+        # print(mc,'0x'+'%.*x'%(8,int('0b'+mc,0)), format(int(mc,2),"#010x"))
+        return '%#010x' % (int('0b'+mc, 0)),-1,rep
+    if(dict_for[l[0]] == 's'):
+        #If enough values {mc1,mc2 will be returned as -2,-2 if not}
+        exp = 4
+        land = len(l)
+        if (land != exp):
+            print ("Expected",e - 1,"arguments but received",land - 1,end='')
+            return -2,-2,''
+        imm = imm12bit(l[3])
+        rs1 = get_reg(l[2])
+        rs2 = get_reg(l[1])
+        if(rs1==-1 or rs2==-2):
+            print(" undefined register in Store instruction",l[0])
+            sys.exit()
+        f3 = dict3[l[0]]
+        opcode = dict_opcode[l[0]]
+        #print(imm[0:7:],rs2,rs1,f3,imm[7::],opcode)
+        mc = imm[0:7:] + rs2 + rs1 + f3 + imm[7::] + opcode
+        #print(mc)
+        return '%#010x' % (int('0b'+mc, 0)),-1,l[0] + " "+l[1]+" "+l[3]+"("+l[2]+")   "
+    elif(dict_for[l[0]] == 'sb'):
+        #If enough values {mc1,mc2 will be returned as -2,-2 if not}
+        exp = 4
+        land = len(l)
+        if (land != exp):
+            print ("Expected",e - 1,"arguments but received",land - 1,end='')
+            return -2,-2,''
+        # print(labels)
+        imm = int((labels[l[3]]*4 - pc)/2)
+        rs1 = get_reg(l[1])
+        rs2 = get_reg(l[2])
+        if(rs1==-1 or rs2==-2):
+            print("undefined register in Branch instruction",l[0])
+            sys.exit()
+        f3 = dict3[l[0]]
+        opcode = dict_opcode[l[0]]
+        # print((labels[l[3]]*4 - pc))
+        if(str(imm)[0] != '-'):
+            imm = format(int(imm), '#014b')[2::]
+        else:
+            imm = format(2**12 - abs(int(imm)), '#014b')[2::] 
+        #  rs2, rs1, f3, imm[7::], opcode)
+        mc = imm[0] + imm[2:8:] + rs2 + rs1 + f3 + imm[8::] + imm[1] + opcode
+        # print(mc,'%#010x'%(int('0b'+mc,0)))#, format(int(mc,2),"#010x"))
+        return '%#010x' % (int('0b'+mc, 0)),-1,l[0]+" "+l[1]+" "+l[2]+" "+str((labels[l[3]]*4 - pc))+"   "
+    if(dict_for[l[0]] == 'u'):
+        #If enough values {mc1,mc2 will be returned as -2,-2 if not}
+        exp = 3
+        land = len(l)
+        if (land != exp):
+            print ("Expected",e - 1,"arguments but received",land - 1,end='')
+            return -2,-2,''
+        #continue making mc
+        imm = imm20bit(l[2])
+        rd = get_reg(l[1])
+        if(rd==-1):
+            print(" undefined register in instruction",l[0])
+            sys.exit()
+        opcode = dict_opcode[l[0]]
+        #print(l,imm,rd,opcode)
+        mc = imm+rd+opcode
+        tttt = l[2]
+        if(l[2][0]=='0' and l[2][1]=='x'):
+            tttt = int(l[2],16)
+        return '%#010x' % (int('0b'+mc, 0)),-1,l[0]+" "+l[1]+" "+str(tttt)+"  "
+    if(dict_for[l[0]] == 'uj'): 
+         # jal x1,label
+        #If enough values {mc1,mc2 will be returned as -2,-2 if not}
+        exp = 3
+        land = len(l)
+        if (land != exp):
+            print ("Expected",e - 1,"arguments but received",land - 1,end='')
+            return -2,-2,''
+        opcode = dict_opcode[l[0]]
+        rd = get_reg(l[1])
+        if(rd==-1):
+            print("Undefined register in jal instruction")
+            sys.exit()
+        #print("label[l[2]] =", labels[l[2]], "current pc =", pc)
+        imm = int(labels[l[2]])*4 - pc
+        # print("imm = ", imm)
+        tttt = imm
+        #relative value from address of current instructionAddress of label - PC(considerin PC is at current instruction)
+        if(str(imm)[0] != '-'):
+            imm = format(imm, "#022b")[2::]
+        else:
+            imm = format(2**20 - abs(imm), '#022b')[2::]
+        #print(imm,rd,opcode)
+        # because jal takes imm[20:1] ignores the first bit(0 index) as all instruction jumps are a multiple of 4 and 2 thus reducing redundancy
+        imm = imm[0] + imm[0:19]
+        imm = imm[0] + imm[10::] + imm[9] + imm[1:9:]
+        #print(imm)
+        mc = str(imm) + rd + opcode
+        return '%#010x' % (int('0b'+mc, 0)),-1,l[0]+" "+l[1]+" "+str(tttt)+"   "
