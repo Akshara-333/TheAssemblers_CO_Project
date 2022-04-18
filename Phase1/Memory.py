@@ -102,5 +102,4 @@ def Memo(s):
         return data
 
 mo = Memory()
-mo.adddata('.asciiz','Hello World')
 mo.Memo()
