@@ -76,3 +76,31 @@ def adddata(s, type, val):
         	# print(self.data)
         	# return hex(int(myreturnvalue+268435456))
 
+def get_data(s, add ):
+        # x=int(0x10000000)
+        # y=int(add)
+        # z=y-x
+        # print (self.data[hex(add & 0xffffffff).zfill(8)])
+        try:
+            return s.data[hex(add & 0xffffffff).zfill(8)]
+        except:
+            return '00'
+    
+def add_text(s, val):
+        s.text.append(val)
+
+def Memo(s):
+        print("data segment---------------------------------------------------------------------------------------------------------\n", s.data)
+        data = []
+        '''
+        for x in range(len(self.data)):
+            # print(hex(268435456 + x)," ",self.data[x])
+            data_out.append( str(hex(268435456 + x))+ " : " + str(self.data[x]) )
+        '''
+        print("text segment"+"("+str(len(s.text))+")",
+              "---------------------------------------------------------------------------------------------------------\n", s.text, "\n\n")
+        return data
+
+mo = Memory()
+mo.adddata('.asciiz','Hello World')
+mo.Memo()
