@@ -307,3 +307,462 @@ def execute(list,registers):
     elif(insname=="jal"):
         jal()
 
+#listof_functions=[add, and1, or1, sll, slt, sra, srl, sub, xor, mul, div, rem,addi, andi, ori, lb, ld, lh, lw, jalr,sb, sw, sd, sh,beq, bne, bge, blt, lui,jal]
+
+
+def add():
+    #print(list)
+    m=int(list[0],2)#values in registers and list are in binary format
+    n=int(list[1],2)
+    x=extract(registers[m],32) + extract(registers[n],32)
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+
+def and1():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    # print(int(registers[m],2),int(registers[n],2))
+    x = extract(registers[m],32) & extract(registers[n],32)
+    # print(x,"ans")
+    o=int(list[3],2)
+    # print(o)
+    registers[o]=convert(x,32)
+    # print(registers[o])
+
+def or1():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(registers[m],32) | extract(registers[n],32)
+    o = int(list[3],2)
+    registers[o]=convert(x,32)
+
+def slt():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    o=int(list[3],2)
+    if extract(registers[m],32) < extract(registers[n],32):
+        registers[o]=convert(1,32)
+    else:
+        registers[o]=convert(0,32)
+
+def sll():
+    m = int(list[0],2) #rs1
+    n = int(list[1],2) #rs2
+    if(extract(registers[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    if(extract(registers[n],32)>32):
+        x=0
+    else:
+        x = extract(registers[m],32) << extract(registers[n],32)
+    # print(int(registers[m],2),int(registers[n],2))
+    o=int(list[3],2)
+    # print(x)
+    registers[o]=convert(x,32)
+    
+def sra():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    if(extract(registers[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    elif(extract(registers[n],32)<=32):
+        x = extract(registers[m],32)>>extract(registers[n],32)
+    else:
+        x= -1
+    # x = int(registers[m],2) >> int(registers[n],2)
+    o = int(list[3],2)
+    # print(x)
+    registers[o]=convert(x,32)
+    
+def srl():
+    m = int(list[0],2) #rs1
+    n = int(list[1],2) #rs2
+    o = int(list[3],2)
+    if(extract(registers[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    elif(extract(registers[n],32)<=32):
+        v = registers[m]
+        for _ in range(int(registers[n],2)):
+            v = ('0'+v)[:32]
+            registers[o]=com_32(v)
+    else:
+        x=0
+        registers[o]=convert(v,32)
+    
+def sub():
+    m=int(list[0],2)
+    n=int(list[1],2)
+    x=extract(registers[m],32) - extract(registers[n],32)
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+    # print("yo1")
+
+def xor():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(registers[m],32) ^ extract(registers[n],32)
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+
+def mul():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(registers[m],32) * extract(registers[n],32)
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+
+def div():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    if(extract(registers[n],32)==0):
+        print("division by zero not allowed")
+        return "error : division by zero not allowed"
+    x = int(extract(registers[m],32) / extract(registers[n],32))
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+
+def rem():
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(registers[m],32) % extract(registers[n],32)
+    o=int(list[3],2)
+    registers[o]=convert(x,32)
+
+def addi():
+    m = int(list[0],2)
+    n = str(list[2])
+    # print("immediate value =",n,extract(n,12))
+    # print(registers[m],extract(registers[m],32))
+    x = extract(registers[m],32) + extract(n,12)
+    # print((x))
+    # print(convert(x,32))
+    o = int(list[3],2)
+    registers[o]=convert(x,32)
+
+def andi():
+    # print(list)
+    m = int(list[0],2)
+    n = str(list[2])
+    # print("debug",m,n)
+    x = extract(registers[m],32) & extract(n,12)
+    o = int(list[3],2)
+    registers[o]=convert(x,32)
+
+def ori():
+    m = int(list[0],2)
+    n = str(list[2])
+    x = extract(registers[m],32) | extract(n,12)
+    o = int(list[3],2)
+    registers[o]=convert(x,32)
+
+def lb():
+    m=extract(list[2],12) #immediate value
+    k=int(list[0],2) #rs1
+    n=m+extract(registers[k],32) #calculate r[rs1] + imm
+    # print(hex(n),m,k)
+    if(n<500000000):
+        # print("address",hex(n))
+        x=mem.get_data_at(n)  
+    else:
+        try:
+            x=stack[hex(n)]
+        except:
+            x='00'
+    y=int(list[3],2)
+    registers[y]=convert(extract(bin(int('0x'+x,16))[2:],8),32)
+
+def lw():
+    # print("m=====",list[2])
+    m=extract(list[2],12)
+    # print(m)
+    k=int(list[0],2)
+    # print("address in register ",hex(int(registers[k],2)))
+    n=m+int(registers[k],2)
+    # print("n=====",(n-268435456))
+    # print(hex(n),n)
+    if(n+3<500000000):
+        x1=mem.get_data_at(n)
+        x2=mem.get_data_at(n+1)
+        x3=mem.get_data_at(n+2)
+        x4=mem.get_data_at(n+3)
+        x=x4+x3+x2+x1
+        # print("loaded value =",x)
+    else:
+        # print(hex(n),"address in the stack")
+        try:#x4 from n+3 address
+            x4=stack[hex(n+3)]
+        except:
+            x4='00'
+        try:
+            x3=stack[hex(n+2)]
+        except:
+            x3='00'
+        try:
+            x2=stack[hex(n+1)]
+        except:
+            x2='00'
+        try:
+            x1=stack[hex(n)]
+        except:
+            x1='00'
+        x = x4+x3+x2+x1
+        # print("loaded value =",x)
+    y=int(list[3],2)
+    registers[y]=convert(extract(bin(int('0x'+x,16))[2:],32),32)
+
+def ld():
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    if(n+3<500000000):
+        x1=mem.get_data_at(n)
+        x2=mem.get_data_at(n+1)
+        x3=mem.get_data_at(n+2)
+        x4=mem.get_data_at(n+3)
+        x=x4+x3+x2+x1
+    else:
+        try:#x4 from n+3 address
+            x4=stack[hex(n+3)]
+        except:
+            x4='00'
+        try:
+            x3=stack[hex(n+2)]
+        except:
+            x3='00'
+        try:
+            x2=stack[hex(n+1)]
+        except:
+            x2='00'
+        try:
+            x1=stack[hex(n)]
+        except:
+            x1='00'
+        x = x4+x3+x2+x1
+    y=int(list[3],2)
+    registers[y]=convert(extract(bin(int('0x'+x,32))[2:],16),32)
+
+def lh():
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    if(n+1<500000000):
+        x1=mem.get_data_at(n)
+        x2=mem.get_data_at(n+1)
+        x=x2+x1
+    else:#they are in stack
+        try:
+            x2=stack[hex(n+1)]
+        except:
+            x2='00'
+        try:
+            x1=stack[hex(n)]
+        except:
+            x1='00'
+        x = x2+x1
+    y=int(list[3],2)
+    registers[y]=convert(extract(bin(int('0x'+x,16))[2:],16),32)
+
+def sb():
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    y=int(list[1],2)
+    #n = should be a address
+    # n=500000010
+    if(n<500000000):
+        mem.adddata(n,registers[y][24:32])
+        # mem.adddata(n,)
+    else:
+        stack[hex(n)]=hex(int(registers[y][24:32],2))[2::].zfill(2)
+
+def sw():
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    y=int(list[1],2)
+    itit = registers[y]
+    add3,add2,add1,add0=hex(n+3),hex(n+2),hex(n+1),hex(n)
+    val3,val2,val1,val0=hex(int(itit[0:8],2))[2::].zfill(2), hex(int(itit[8:16],2))[2::].zfill(2),hex(int(itit[16:24],2))[2::].zfill(2),hex(int(itit[24:],2))[2::].zfill(2)
+    # print(add3,add2,add1,add0)
+    if(n+3<500000000): #store in data segment and append the list
+        mem.adddata(n+3,registers[y][0:8])
+        mem.adddata(n+2,registers[y][8:16])
+        mem.adddata(n+1,registers[y][16:24])
+        mem.adddata(n,registers[y][24:32])
+    if(int( add3 ,16)>0x7ffffff3):
+        print("can's write in memory after 0x7ffffff3")
+    else: #store in stack
+        stack[add3]=val3
+        stack[add2]=val2
+        stack[add1]=val1
+        stack[add0]=val0
+        
+    
+def sh():
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    y=int(list[1],2)
+    add1,add0=hex(n+1),hex(n)
+    val1,val0=hex(int(registers[y][16:24],2))[2::].zfill(2),hex(int(registers[y][24:],2))[2::].zfill(2)
+    if(n+1<500000000):
+        mem.adddata(n+1,registers[y][16:24])
+        mem.adddata(n,registers[y][24:32])
+    
+    else:
+        stack[add1]=val1
+        stack[add0]=val0
+
+def sd(): 
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(registers[k],2)
+    y=int(list[1],2)
+    # mem.adddata(n+7,'00000000')
+    # mem.adddata(n+6,'00000000')
+    # mem.adddata(n+5,'00000000')
+    # mem.adddata(n+4,'00000000')
+    itit = registers[y]
+    add3,add2,add1,add0=hex(n+3),hex(n+2),hex(n+1),hex(n)
+    val3,val2,val1,val0=hex(int(itit[0:8],2))[2::].zfill(2),hex(int(itit[8:16],2))[2::].zfill(2),hex(int(itit[16:24],2))[2::].zfill(2),hex(int(itit[24:],2))[2::].zfill(2)
+    if(n+3<500000000):
+        mem.adddata(n+3,registers[y][0:8])
+        mem.adddata(n+2,registers[y][8:16])
+        mem.adddata(n+1,registers[y][16:24])
+        mem.adddata(n,registers[y][24:32])
+    else:
+        stack[add3]=val3
+        stack[add2]=val2
+        stack[add1]=val1
+        stack[add0]=val0
+
+
+def beq():
+    m=int(list[0],2)
+    n=int(list[1],2)
+    o=extract(list[2],12)*2
+    if (extract(registers[m],32)==extract(registers[n],32)):
+        if(o>0):
+            list[8]=bin(int(list[8],2)+ o -4).replace("0b","")
+        else:
+            list[8]=bin(int(list[8],2)+ o - 4).replace("0b","")
+
+def bge():
+    m=int(list[0],2)
+    n=int(list[1],2)
+    o=extract(list[2],12)*2
+    if extract(registers[m],32)>=extract(registers[n],32):
+        if(o>0):
+            list[8]=bin(int(list[8],2)+ o -4).replace("0b","")
+        else:
+            list[8]=bin(int(list[8],2)+ o- 4).replace("0b","")
+
+def bne():
+    m=int(list[0],2)
+    n=int(list[1],2)
+    o=extract(list[2],12)*2
+    if extract(registers[m],32)!=extract(registers[n],32):
+        if(o>0):
+            list[8]=bin(int(list[8],2)+ o -4).replace("0b","")
+        else:
+            list[8]=bin(int(list[8],2)+ o - 4).replace("0b","")
+
+def blt():
+    m=int(list[0],2)
+    n=int(list[1],2)
+    o=extract(list[2],12)*2
+    if extract(registers[m],32)<extract(registers[n],32):
+        if(o>0):
+            list[8]=bin(int(list[8],2)+ o -4).replace("0b","")
+        else:
+            list[8]=bin(int(list[8],2)+ o - 4).replace("0b","")
+
+def lui():
+    m=int(list[2],2)
+    n=int(list[3],2)
+    registers[n]=bin(m).replace("0b","")+"000000000000"
+    registers[n]=com_32(registers[n])
+   
+
+def jal():
+    m=extract(list[2],20)*2 
+    n=int(list[3],2)
+    registers[n]=com_32(bin(int(list[8],2)).replace("0b",""))#storing return address in register
+    
+    list[8]=bin(int(list[8],2)+m - 4).replace("0b","") #updating program counter
+def jalr(): #jalr x0,0(x1)
+    m=extract(list[2],12) 
+    k=int(list[0],2) #rs1
+    n=m+int(registers[k],2) #relative address to load from memory
+    o=int(list[3],2)
+    registers[o]=com_32(bin(int(registers[8],2)+4).replace("0b",""))
+    # list[8]=bin(n).replace("0b","").zfill(32)
+    list[8] = convert(n,32)
+    # print(list[8])
+
+def run():
+    start=time.time()
+    elapsed=0
+    count=0
+    while elapsed < 4:
+        #print(list[7])
+        string=fetch(list)
+        #print(string)
+        if string=="continue":
+            count=count+1  #for GUI
+            
+            decode(list)
+            print(">>> \t ENTER--->",list[9],"initial pc=",hex(int(list[8],2)))
+            execute(list,registers)
+            registers[0] = '00000000000000000000000000000000'
+            # printregisters()
+            elapsed=time.time()-start
+        else:
+            print("Code successfully Executed")
+            break
+    if(elapsed>2):
+        print("Something is wrong, program took too long too execute, might be an infinite loop")
+    print("run")
+    return count
+    
+def step():
+    
+    string=fetch(list)
+    if string=="continue":
+        decode(list)
+        execute(list,registers)
+        #execute one step of code
+    else:
+        print("code successfully Executed")
+    #print(list)
+    x=int(list[8],2)
+    print("step")
+    return x-4
+
+def reset():
+    global list
+    list=['00000000000000000000000000000000', '00000000000000000000000000000000', '00000000000000000000000000000000', '00000000000000000000000000000000',
+ '00000000000000000000000000000000', '00000000000000000000000000000000', '00000000000000000000000000000000', '00000000000000000000000000000000', '00000000000000000000000000000000',
+ '00000000000000000000000000000000'] 
+    global registers
+    registers=['00000000000000000000000000000000','00000000000000000000000000000000','01111111111111111111111111110000','00010000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000','00000000000000000000000000000000',
+'00000000000000000000000000000000','00000000000000000000000000000000']
+
+    #print(list)
+    print("reset")
+def stop():
+    print("execution stopped")
+
+def previous():
+    print("previous")
+run()
+print(registers)
+mem.Memo()
+print(stack)
