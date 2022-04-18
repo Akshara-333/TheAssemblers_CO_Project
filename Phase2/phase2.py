@@ -92,3 +92,218 @@ def getIR(file_name,pc):
     return -1
 
 i_file = "outfile.mc" 
+def fetch(list):
+    # print(list[8])
+    list[7] = getIR(i_file,int(list[8],2))
+    if(list[7]==-1):
+        return "over"
+    list[8]=bin(int(list[8],2)+4).replace("0b","")
+    return "continue"
+
+'''0:rs1 1:rs2 2:imm 3:rd 4:f3 5:f7 6:opcode 7:ir 8:pc 9:current_function '''
+def decode(list):
+    #print(list)
+    ins=list[7]
+    opcode = ins[25:32]
+    if(opcode=="0110011"):#r-format
+        list[5]=ins[0:7]
+        list[1]=ins[7:12]
+        list[0]=ins[12:17]
+        list[4]=ins[17:20]
+        list[3]=ins[20:25]
+
+        if list[5]== "0000000": #f7 = 0000000
+            if list[4]=="000":
+                list[9]="add"
+
+            elif list[4]=="111":
+                list[9]="and"
+
+            elif list[4]=="110":
+                list[9]="or"
+
+            elif list[4]=="001":
+                list[9]="sll"
+
+            elif list[4]=="010":
+                list[9]="slt"
+
+            elif list[4]=="101":
+                list[9]="srl"
+
+            elif list[4]=="100":
+                list[9]="xor"
+
+        elif list[5]== "0100000":
+            if list[4]=="101":
+                list[9]="sra"
+
+            elif list[4]=="000":
+                list[9]="sub"
+
+        elif list[5]== "0000001":
+            if list[4]=="000":
+                list[9]="mul"
+
+            elif list[4]=="100":
+                list[9]="div"
+
+            elif list[4]=="110":
+                list[9]="rem"
+
+
+    elif(opcode=="0100011"):# s-format
+        list[2]=ins[0:7]   
+        list[1]=ins[7:12]
+        list[0]=ins[12:17]
+        list[4]=ins[17:20]
+        list[2]+=ins[20:25]
+        # list[2]+ins[20:25]
+        if list[4]=="000":
+            list[9]="sb"
+
+        elif list[4]=="010":
+            list[9]="sw"
+
+        elif list[4]=="011":
+            list[9]="sd"
+
+        elif list[4]=="001":
+            list[9]="sh"
+
+
+            '''0:rs1 1:rs2 2:imm 3:rd 4:f3 5:f7 6:opcode 7:ir 8:pc 9:current_function '''
+    elif(opcode=="1100011"):#sb
+        list[1]=ins[7:12]
+        list[0]=ins[12:17]
+        list[4]=ins[17:20]
+        list[2]=(ins[0]+ins[24]+ins[1:7]+ins[20:24]) 
+        if list[4]=="000":
+            list[9]="beq"
+
+        elif list[4]=="001":
+            list[9]="bne"
+
+        elif list[4]=="101":
+            list[9]="bge"
+
+        elif list[4]=="100":
+            list[9]="blt"
+
+    elif(opcode=="0000011"):#lb,lw,lh,ld
+        list[2]=ins[0:12]
+        list[0]=ins[12:17]
+        list[3]=ins[20:25]
+        list[4]=ins[17:20]
+
+        if list[4]=="000":
+            list[9]="lb"
+
+        elif list[4]=="001":
+            list[9]="lh"
+
+        elif list[4]=="010":
+            list[9]="lw"
+
+        elif list[4]=="011":
+            list[9]="ld"
+
+    elif opcode=="0110111": #U-lui
+        list[2]=ins[0:20]
+        list[3]=ins[20:25]
+        list[9]="lui"
+
+    elif opcode=="0010011": #andi ori addi
+        list[2]=ins[0:12]
+        list[0]=ins[12:17]
+        list[3]=ins[20:25]
+        list[4]=ins[17:20]
+
+        if list[4]=="110":
+            list[9]="ori"
+
+        elif list[4]=="111":
+            list[9]="andi"
+
+        elif list[4]=="000":
+            list[9]="addi"
+
+    elif opcode=="1100111": #jalr
+        list[2]=ins[0:12]
+        list[0]=ins[12:17]
+        list[3]=ins[20:25]
+        list[4]=ins[17:20]
+        list[9]="jalr"
+
+    elif opcode=="1101111": #jal
+        # list[2][0]=ins[0]
+        # list[2][1:9]=ins[12:20]
+        # list[2][10]=ins[11]
+        list[2]=ins[0]+ins[12:20]+ins[11]+ins[1:11]
+        list[3]=ins[20:25]
+        list[9]="jal"
+        
+
+def execute(list,registers):
+    insname=list[9]
+    if(insname=="add"):
+        add()
+    elif(insname=="and"):
+        and1()
+    elif(insname=="or"):
+        or1()
+    elif(insname=="sll"):
+        sll()
+    elif(insname=="slt"):
+        slt()
+    elif(insname=="sra"):
+        sra()
+    elif(insname=="srl"):
+        srl()
+    elif(insname=="sub"):
+        sub()
+    elif(insname=="xor"):
+        xor()
+    elif(insname=="mul"):
+        mul()
+    elif(insname=="div"):
+        div()
+    elif(insname=="rem"):
+        rem()
+    elif(insname=="addi"):
+        addi()
+    elif(insname=="andi"):
+        andi()
+    elif(insname=="ori"):
+        ori()
+    elif(insname=="lb"):
+        lb()
+    elif(insname=="ld"):
+        ld()
+    elif(insname=="lh"):
+        lh()
+    elif(insname=="lw"):
+        lw()
+    elif(insname=="jalr"):
+        jalr()
+    elif(insname=="sb"):
+        sb()
+    elif(insname=="sw"):
+        sw()
+    elif(insname=="sd"):
+        sd()
+    elif(insname=="sh"):
+        sh()
+    elif(insname=="beq"):
+        beq()
+    elif(insname=="bne"):
+        bne()
+    elif(insname=="bge"):
+        bge()
+    elif(insname=="blt"):
+        blt()
+    elif(insname=="lui"):
+        lui()
+    elif(insname=="jal"):
+        jal()
+
