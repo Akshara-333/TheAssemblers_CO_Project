@@ -441,3 +441,433 @@ def decode(list,bhtflag):
                 return 1,bin(int(list[8],2)+m - 4).replace("0b",""),["JAL",1]
         elif(knob1==0):
             return 1,bin(int(list[8],2)+m - 4).replace("0b",""),["JAL",1]
+ def execute(list,regs):
+    ins_name=list[9]
+    if(ins_name=="add"):
+        return add(list)
+    elif(ins_name=="and"):
+        return and1(list)
+    elif(ins_name=="or"):
+        return or1(list)
+    elif(ins_name=="sll"):
+        return sll(list)
+    elif(ins_name=="slt"):
+        return slt(list)
+    elif(ins_name=="sra"):
+        return sra(list)
+    elif(ins_name=="srl"):
+        return srl(list)
+    elif(ins_name=="sub"):
+        return sub(list)
+    elif(ins_name=="xor"):
+        return xor(list)
+    elif(ins_name=="mul"):
+        return mul(list)
+    elif(ins_name=="div"):
+        return div(list)
+    elif(ins_name=="rem"):
+        return rem(list)
+    elif(ins_name=="addi"):
+        return addi(list)
+    elif(ins_name=="andi"):
+        return andi(list)
+    elif(ins_name=="ori"):
+        return ori(list)
+    elif(ins_name=="lb"):
+        return lb(list)
+    elif(ins_name=="lw"):
+        return lw(list)
+    elif(ins_name=="jalr"):
+        return jalr(list)
+    elif(ins_name=="sb"):
+        return sb(list)
+    elif(ins_name=="sw"):
+        return sw(list)
+    elif(ins_name=="sd"):
+        return sd(list)
+    elif(ins_name=="sh"):
+        return sh(list)
+    elif(ins_name=="beq"):
+        return beq(list)
+    elif(ins_name=="bne"):
+        return bne(list)
+    elif(ins_name=="bge"):
+        return bge(list)
+    elif(ins_name=="blt"):
+        return blt(list)
+    elif(ins_name=="lui"):
+        return lui(list)
+    elif(ins_name=="jal"):
+        return jal(list)
+
+#list_fun=[add, and1, or1, sll, slt, sra, srl, sub, xor, mul, div, rem,addi, andi, ori, lb, ld, lw, jalr,sb, sw, sd, sh,beq, bne, bge, blt, lui,jal]
+
+def add(list):
+    #print(list)
+    m=int(list[0],2)#values in regs and list are in binary format
+    n=int(list[1],2)
+    x=extract(regs[m],32) + extract(regs[n],32)
+    o=int(list[3],2)
+    # regs[o]=convert(x,32)
+    return convert(x,32),o,"R";
+
+def and1(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    # print(int(regs[m],2),int(regs[n],2))
+    x = extract(regs[m],32) & extract(regs[n],32)
+    # print(x,"ans")
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # print(o)
+    # regs[o]=convert(x,32)
+    # print(regs[o])
+
+def or1(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(regs[m],32) | extract(regs[n],32)
+    o = int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+
+def slt(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    o=int(list[3],2)
+    if extract(regs[m],32) < extract(regs[n],32):
+        return convert(1,32),o,"R";
+        # regs[o]=convert(1,32)
+    else:
+        # regs[o]=convert(0,32)
+        return convert(0,32),o,"R";
+
+def sll(list):
+    m = int(list[0],2) #rs1
+    n = int(list[1],2) #rs2
+    if(extract(regs[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    if(extract(regs[n],32)>32):
+        x=0
+    else:
+        x = extract(regs[m],32) << extract(regs[n],32)
+    # print(int(regs[m],2),int(regs[n],2))
+    o=int(list[3],2)
+    # print(x)
+    return convert(x,32),o,"R";
+
+def sra(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    if(extract(regs[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    elif(extract(regs[n],32)<=32):
+        x = extract(regs[m],32)>>extract(regs[n],32)
+    else:
+        x= -1
+    # x = int(regs[m],2) >> int(regs[n],2)
+    o = int(list[3],2)
+    # print(x)
+    # regs[o]=convert(x,32)
+    return convert(x,32),o,"R";
+
+def srl(list):
+    m = int(list[0],2) #rs1
+    n = int(list[1],2) #rs2
+    o = int(list[3],2)
+    if(extract(regs[n],32)<0):
+        print("error: negative shift not allowed")
+        return "error: negative shift not allowed"
+    elif(extract(regs[n],32)<=32):
+        v = regs[m]
+        for _ in range(int(regs[n],2)):
+            v = ('0'+v)[:32]
+        #regs[o]=com_32(v)
+        return com_32(v),o,"R";
+    else:
+        v=0
+        return convert(v,32),o,"R";
+        # regs[o]=convert(v,32)
+
+def sub(list):
+    m=int(list[0],2)
+    n=int(list[1],2)
+    x=extract(regs[m],32) - extract(regs[n],32)
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+    # print("yo1")
+
+def xor(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(regs[m],32) ^ extract(regs[n],32)
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+
+def mul(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(regs[m],32) * extract(regs[n],32)
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+
+def div(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    if(extract(regs[n],32)==0):
+        print("division by zero not allowed")
+        return "error : division by zero not allowed"
+    x = int(extract(regs[m],32) / extract(regs[n],32))
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+
+def rem(list):
+    m = int(list[0],2)
+    n = int(list[1],2)
+    x = extract(regs[m],32) % extract(regs[n],32)
+    o=int(list[3],2)
+    return convert(x,32),o,"R";
+    # regs[o]=convert(x,32)
+
+def addi(list):
+    m = int(list[0],2)
+    n = str(list[2])
+    # print("immediate value =",n,extract(n,12))
+    # print(regs[m],extract(regs[m],32))
+    x = extract(regs[m],32) + extract(n,12)
+    # print((x))
+    # print(convert(x,32))
+    o = int(list[3],2)
+    return convert(x,32),o,"I";
+    # regs[o]=convert(x,32)
+
+def andi(list):
+    m = int(list[0],2)
+    n = str(list[2])
+    # print("debug",m,n)
+    x = extract(regs[m],32) & extract(n,12)
+    o = int(list[3],2)
+    return convert(x,32),o,"I";
+    # regs[o]=convert(x,32)
+
+def ori(list):
+    m = int(list[0],2)
+    n = str(list[2])
+    x = extract(regs[m],32) | extract(n,12)
+    o = int(list[3],2)
+    return convert(x,32),o,"I";
+    # regs[o]=convert(x,32)
+
+def lb(list):
+    m=extract(list[2],12) #immediate value
+    k=int(list[0],2) #rs1
+    n=m+extract(regs[k],32)
+    y=int(list[3],2)
+    return convert(n,32),y,"LOADBYTE";
+    # regs[y]=convert(extract(bin(int('0x'+x,16))[2:],8),32)
+
+def lw(list):
+    # print("m=====",list[2])
+    m=extract(list[2],12)
+    # print(m)
+    k=int(list[0],2)
+    # print("address in register ",hex(int(regs[k],2)))
+    n=m+int(regs[k],2)
+    # print("n=====",(n-268435456))
+    # print(hex(n),n)
+    y=int(list[3],2)
+    return convert(n,32),y,"LOADWORD";
+
+def sb(list):
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(regs[k],2)
+    y=int(list[1],2)
+    it = regs[y]
+    return convert(n,32),it,"S";
+    #returning final address, register_to_access , "S"
+
+def sw(list):
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    # print(k,m,regs[k])
+    n=m+int(regs[k],2)
+    y=int(list[1],2)
+    it = regs[y]
+    return convert(n,32),it,"S";
+    #returning final address, register_to_access , "S"
+
+def sh(list):
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(regs[k],2)
+    y=int(list[1],2)
+    it = regs[y]
+    return convert(n,32),it,"S";
+    #returning final address, register_to_access , "S"
+
+def sd(list):
+    m=extract(list[2],12)
+    k=int(list[0],2)
+    n=m+int(regs[k],2)
+    y=int(list[1],2)
+    it = regs[y]
+    return convert(n,32),it,"S";
+    #returning final address, register_to_access , "S"
+
+def beq(list):
+    return 1,1,"SB";
+
+def bge(list):
+    return 1,1,"SB";
+
+def bne(list):
+    return 1,1,"SB";
+
+def blt(list):
+    return 1,1,"SB";
+
+def lui(list):
+    m=int(list[2],2)
+    n=int(list[3],2)
+    # regs[n]=bin(m).replace("0b","")+"000000000000"
+    # regs[n]=com_32(regs[n])
+    return com_32(bin(m).replace("0b","")+"000000000000"),n,"U";
+
+def auipc(list): 
+    m=int(list[2],2) #current imm
+    n=int(list[3],2)
+    a = int(list[8],2) #current pc
+    x=bin(m).replace("0b","")+"000000000000"
+    x=bin(int(x,2)+int(list[8],2) - 4 ).replace("0b","")
+    x = com_32(x)
+    return x,n,"U";
+
+def jal(list):
+    m=extract(list[2],20)*2 #imm
+    n=int(list[3],2) #rd
+    if knob1==1 and knob2==0:
+        list[8]=com_32(bin(int(list[8],2)+m-4).replace("0b",""))
+        return com_32(bin(int(list[8],2)-m+4).replace("0b","")),n,"J1"
+    elif knob1==1 and knob2==1:
+        return com_32(list[8]),n,'J1'
+    # print('executionJAL',list[8])
+    #exit()
+    return com_32(list[8]),n,'J1'
+
+def jalr(list): 
+    o=int(list[3],2)
+    return com_32(list[8]),o,"J2"
+
+def mem_access(list,v1,v2,v3):
+    ins_type = v3 # index where ins_type is stored
+    if(ins_type == "R"):
+        return v1,v2,"R";
+    elif(ins_type == "U"):
+        return v1,v2,"U";
+    elif(ins_type == "I"):
+        return v1,v2,"I";
+    elif(ins_type == "S"):
+        ins_name = list[9]
+        if  (ins_name=="sb"):
+            n = int(v1,2) # index where final address is stored
+            it = v2 
+            if(n<500000000):
+                mem.adddata(n,it[24:32])
+            else:
+                stack[hex(n)]=hex(int(it[24:32],2))[2::].zfill(2)
+            return 1,1,"S";
+        elif(ins_name=="sw"):
+            n = int(v1,2) # index where final address is stored
+            it = v2 # index where it is stored
+            add3,add2,add1,add0=hex(n+3),hex(n+2),hex(n+1),hex(n)
+            val3,val2,val1,val0=hex(int(it[0:8],2))[2::].zfill(2), hex(int(it[8:16],2))[2::].zfill(2),hex(int(it[16:24],2))[2::].zfill(2),hex(int(it[24:],2))[2::].zfill(2)
+            # print('storing at',add0,add1,add2,add3)
+            # print('value     ',val0,val1,val2,val3)
+            if(n+3<500000000): #store in data segment 
+                mem.adddata(n+3,it[0:8])
+                mem.adddata(n+2,it[8:16])
+                mem.adddata(n+1,it[16:24])
+                mem.adddata(n,it[24:32])
+            elif(int( add3 ,16)>0x7ffffff3):
+                print("can't write in memory after 0x7ffffff3")
+            else:
+                stack[add3]=val3
+                stack[add2]=val2
+                stack[add1]=val1
+                stack[add0]=val0
+                # print(stack)
+            return 1,1,"S";
+        elif(ins_name=="sh"):
+            n = int(v1,2) # index where final address is stored
+            it = v2 # index where it is stored
+            add1,add0=hex(n+1),hex(n)
+            val1,val0=hex(int(it[16:24],2))[2::].zfill(2),hex(int(it[24:],2))[2::].zfill(2)
+            if(n+1<500000000):
+                mem.adddata(n+1,it[16:24])
+                mem.adddata(n,it[24:32])
+
+            else:
+                stack[add1]=val1
+                stack[add0]=val0
+            return 1,1,"S";
+
+    elif(ins_type == "SB"):
+        return 1,1,"SB";
+
+    elif(ins_type == "LOADBYTE"):
+        n = int(v1,2)#index of address
+        r_i = v2#index of register index
+        if(n<500000000):
+            # print("address",hex(n))
+            x=mem.get_data_at(n) 
+        else:
+            try:
+                x=stack[hex(n)]
+            except:
+                x='00'
+        a = convert(extract(bin(int('0x'+x,16))[2:],8),32)
+        return a,r_i,"LOADBYTE";
+    elif(ins_type == "LOADWORD"):
+        n = int(v1,2)#index of address
+        r_i = v2#index of register index
+        if(n+3<500000000):
+            x1=mem.get_data_at(n)
+            x2=mem.get_data_at(n+1)
+            x3=mem.get_data_at(n+2)
+            x4=mem.get_data_at(n+3)
+            x=x4+x3+x2+x1
+            # print("loaded value =",x)
+        else:
+            try:#x4 from n+3 address
+                x4=stack[hex(n+3)]
+            except:
+                x4='00'
+            try:
+                x3=stack[hex(n+2)]
+            except:
+                x3='00'
+            try:
+                x2=stack[hex(n+1)]
+            except:
+                x2='00'
+            try:
+                x1=stack[hex(n)]
+            except:
+                x1='00'
+            x = x4+x3+x2+x1
+        a = convert(extract(bin(int('0x'+x,16))[2:],32),32)
+        # print("return value from memaccess of LOADWORD,",a,r_i,"LOADWORD")
+        return a,r_i,"LOADWORD";
+    elif(ins_type == "J1"):
+        # return com_32(bin(int(list[8],2)).replace("0b","")),v2,"J1";
+        return v1,v2,"J1";
+    elif(ins_type == "J2"):
+        # return com_32(bin(int(regs[8],2)+4).replace("0b","")),v2,"J2";
+        return v1,v2,"J2";
