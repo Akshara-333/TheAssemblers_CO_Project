@@ -871,3 +871,462 @@ def mem_access(list,v1,v2,v3):
     elif(ins_type == "J2"):
         # return com_32(bin(int(regs[8],2)+4).replace("0b","")),v2,"J2";
         return v1,v2,"J2";
+
+    def write(list,regs,v1,v2,v3,v4=1):
+    ins_type = v3 # index where ins_type is stored
+    index = v2 #index where index of destination register is stored
+    result = v1
+    if(v4=='skip'):
+        return
+    if(ins_type == "R"):
+        if index!=0:
+            regs[index] = result
+    elif(ins_type == "I"):
+        if index!=0:
+            regs[index] = result
+            # print(regs[index])
+    elif(ins_type == "U"):
+        if index!=0:
+            regs[index] = result
+    elif(ins_type == "S"):
+        nothingness = "sad"
+    elif(ins_type == "SB"):
+        nothingness = "sad"
+    elif(ins_type == "J1"):
+        if index!=0:
+            regs[index] = result
+    elif(ins_type == "J2"):
+        # nothingness = "sad"
+        if index!=0:
+            regs[index] = result
+    elif(ins_type == "LOADBYTE"):
+        if index!=0:
+            regs[index] = result
+    elif(ins_type == "LOADWORD"):
+        # print('LOAD EXECUTION',index,result)
+        if index!=0:
+            regs[index] = result
+            # print(' x',index,' = ',hex(int(regs[index],2))[2::].zfill(8) ,sep='')
+
+def run(list):
+    rfile=open("outfile.mc","r+")
+    bc=rfile.readlines()
+    start=time.time()
+    elapsed=0
+    count=0
+    no_of_alu=0
+    no_of_cont=0
+    no_of_dt=0
+    j,k=0,0
+    while elapsed < 4:
+        #print(list[7])
+        t=int(list[8],2)
+        string,lemme=fetch(list,0)
+        #print(string)
+        if string=="continue":
+            count=count+1  #for GUI
+            curr_pc = list[8]
+            bs1,bs2,bs3=decode(list,0)
+            list[8]=bs2
+            # print(list)
+            if(list[9]=='beq' or list[9]=='bne' or list[9]=='blt' or list[9]=='bge' or list[9]=='jal' or list[9]=='jalr'):
+                no_of_cont+=1
+                if(list[9]=='jal' or list[9]=='jalr'):
+                    no_of_alu+=1
+            else:
+                no_of_alu+=1
+            if(list[9]=='lb' or list[9]=='lw' or list[9]=='sb' or list[9]=='sw' or list[9]=='sh'):
+                no_of_dt+=1
+            
+            v1,v2,v3 = execute(list,regs)
+            v1,v2,v3 = mem_access(list,v1,v2,v3)
+            if(list[9]=='jal'):
+                v1 = com_32(curr_pc)
+            write(list,regs,v1,v2,v3)
+
+            elapsed=time.time()-start
+            i=bc[int(t/4)]
+            i=i.split(' ',2)
+            i[2]=i[2].replace("\n","")
+            item=QtWidgets.QTableWidgetItem(i[2])
+            #item.setBackground(QtGui.QColor(255,0,0))
+            #self.table.selectRow(j)
+            window.tableWidget.setVerticalHeaderItem(j,item)
+            window.tableWidget.setItem(j,k+0,QTableWidgetItem("Fetch"))
+            window.tableWidget.setItem(j,k+1,QTableWidgetItem("Decode"))
+            #self.table.item(j,k).setBackground(QtGui.QColor(125,125,125))
+            window.tableWidget.setItem(j,k+2,QTableWidgetItem("Execute"))
+            window.tableWidget.setItem(j,k+3,QTableWidgetItem("Mem_Access"))
+            window.tableWidget.setItem(j,k+4,QTableWidgetItem("Write_back"))
+            j=j+1
+            k=k+5
+            printregsRUN()
+        else:
+            print("Code successfully Executed")
+            printregsRUN()
+            break
+    if(elapsed>4):
+        print("Something is wrong, program took too long too execute, might be an infinite loop")
+    print("----------------Non pipelined run-----------------")
+    print("1.  Total Number of cycles taken\t\t: ",count*5)
+    print('2.  Number of Instructions exeuted per cycle\t\t: ',count)
+    print('3.  Cycles Per Instruction (CPI)\t\t: ',5)
+    print('4.  Number of Stalls in pipeline\t\t: ', '0')
+    
+    myfile.write("\n----------------Non pipelined run-----------------")
+    myfile.write("\n1.  Total Number of cycles taken\t\t: "+str(count*5))
+    myfile.write('\n2.  Number of Instructions exeuted per cycle\t\t: '+str(count))
+    myfile.write('\n3.  Cycles Per Instruction (CPI)\t\t: '+str(5))
+    myfile.write('\n4.  Number of Stalls in pipeline\t\t: '+ '0')
+  
+    return count
+    # print(regs)
+
+def step(list):
+    # print(list)
+
+    string=fetch(list)
+    if string=="continue":
+        decode(list)
+        print(">>> \t ENTER--->",list[9],"initial pc=",hex(int(list[8],2)))
+        execute(list,regs)
+        regs[0] = '00000000000000000000000000000000'
+        #execute one step of code
+    else:
+        print("code successfully Executed")
+    #print(list)
+    x=int(list[8],2)
+    print("step")
+    return x-4
+
+master_list=[['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'NIL','NIL'] for i in range(5)]       #list of lists(list)
+master_list[0][8]='00000000000000000000000000000000'
+
+def insert_carr():
+    master_list.insert(0,['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'NIL','NIL'])
+    master_list[0][8] = master_list[1][8]
+
+
+def flush_dada(pc):
+    master_list[0][7] = -1   # filling the next list with suitable pc
+    master_list.insert(0,['NIL','NIL','NIL','NIL','NIL','NIL','NIL','NIL',pc,'NIL'])
+    # print('flush done with new pc at 0 as',pc)
+
+i=0
+
+def flush(number_of_steps, pc):
+    for i in range(number_of_steps):    # emptying the unnecessary instruction
+        master_list[i][7] = -1
+    master_list[0][8] = pc  # filling the next list with suitable pc
+
+def stalling(i):               
+    # master_list.pop(0)
+    master_list.insert(i, ['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'NIL','NIL'])
+    # master_list[i][7] = -2
+
+
+def print_pipelined(pr_fd,pr_de,pr_em,pr_mw,f,cycle):
+    if(f==1):
+        '''printing pipeline regs'''
+        print("------  The Pipeline regs after ",cycle," cycles  ------")
+        print("\tBetween F & D : " + "IR = ",str((hex(int(pr_fd[0],2)).replace('0x','').zfill(8))),)
+        print("\tBetween D & E : " + "Ra = ",str((hex(int(pr_de[0],2)).replace('0x','').zfill(8)))," , "+"Rb = ",str((hex(int(pr_de[1],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_de[2],2)).replace('0x','').zfill(8)))," , "+"Imm = ",str((hex(int(pr_de[3],2)).replace('0x','').zfill(8))))
+        print("\tBetween E & M : " + "Rz = ",str((hex(int(pr_em[0],2)).replace('0x','').zfill(8)))," , "+"Rb = ",str((hex(int(pr_em[1],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_em[2],2)).replace('0x','').zfill(8)))," , "+"Imm = ",str((hex(int(pr_em[3],2)).replace('0x','').zfill(8))))
+        print("\tBetween M & W : " + "Ry = ",str((hex(int(pr_mw[0],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_mw[1],2)).replace('0x','').zfill(8))),)
+      
+
+def printknob5(pr_printing,f):
+    if(f!=-1):
+        '''printing pipeline regs'''
+        print("------  The Pipeline regs for ",f,"th instruction   ------")
+        print("\tBetween F & D : " + "IR = ",str((hex(int(pr_printing[0],2)).replace('0x','').zfill(8))),)
+        print("\tBetween D & E : " + "Ra = ",str((hex(int(pr_printing[1],2)).replace('0x','').zfill(8)))," , "+"Rb = ",str((hex(int(pr_printing[2],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_printing[3],2)).replace('0x','').zfill(8)))," , "+"Imm = ",str((hex(int(pr_printing[4],2)).replace('0x','').zfill(8))))
+        print("\tBetween E & M : " + "Rz = ",str((hex(int(pr_printing[5],2)).replace('0x','').zfill(8)))," , "+"Rb = ",str((hex(int(pr_printing[6],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_printing[7],2)).replace('0x','').zfill(8)))," , "+"Imm = ",str((hex(int(pr_printing[8],2)).replace('0x','').zfill(8))))
+        print("\tBetween M & W : " + "Ry = ",str((hex(int(pr_printing[9],2)).replace('0x','').zfill(8)))," , "+"Rd = ",str((hex(int(pr_printing[10],2)).replace('0x','').zfill(8))),)
+        
+
+def run_pipelined_data_for():
+    flag = 0
+    j=0
+    rfile=open("outfile.mc","r+")
+    bc=rfile.readlines()
+    j,k=0,0
+    start = time.time()
+    elapsed = 0
+    count = 0
+    pr_mem = ['nil','nil','nil'] #pipeline register for decode stage
+    pr_exe = ['nil','nil','nil']
+    pr_printing = ['0','0','0','0','0','0','0','0','0','0','0'] 
+    pr_fd = ['0']#IR
+    pr_de = ['0','0','0','0'] 
+    pr_em = ['0','0','0','0'] 
+    pr_mw = ['0','0'] #Ry Rd
+    nextflagMM=0
+    nextflagMD=0
+    nextflagED=0
+    stallflag,flushflag=0,0
+    no_of_stalls=0
+    no_of_inst = 0
+    lemme=[-1,-1]
+    bs1,bs2,bs3=-1,-1,[-1,-1]
+    curr_pc='00000'
+    print("master_list")
+    hj,hj_prev=-1,-1
+    blank=[]
+    blank2=[]
+    blank3=[]
+    app_flag=0
+    while elapsed < 60:
+        count=count+1
+        t=0
+        if(master_list[4][7]!=-1 and master_list[4][7]!=-2 and master_list[4][6]!='NIL'):
+            no_of_inst+=1
+            if(master_list[4][9]=='beq' or master_list[4][9]=='bge' or master_list[4][9]=='bne' or master_list[4][9]=='blt' or master_list[4][9]=='jal' or master_list[4][9]=='jalr'):
+                no_of_control+=1
+                if(master_list[4][9]=='jal' or master_list[4][9]=='jalr'):
+                    no_of_alu+=1
+            else:
+                no_of_alu+=1
+            if(master_list[4][9]=='sh' or master_list[4][9]=='sw' or master_list[4][9]=='sb' or master_list[4][9]=='lb' or master_list[4][9]=='lw'):
+                no_of_dt+=1
+        # if(master_list[1][8]!='NIL'):
+        #     print("\n>>> (",count,") [",no_of_inst,"] \t ENTER--->",master_list[1][9], "initial pc=", hex(int(master_list[1][8], 2)))
+        # else:
+        #     print("\n>>> \t ENTER--->",master_list[1][9], "initial pc=", 'NIL')
+
+        
+        # lemme[2] = lemme[1]
+        lemme[1] = lemme[0]                             
+
+        string,lemme[0]=fetch(master_list[0],stallflag)            #lemme[0] is -1 if no branching found, else it represents next pc(target)
+        # print("lemme[0] = ",lemme[0])
+        if master_list[0][7]!='NIL' and master_list[0][7]!=-1:
+            pr_fd[0] = master_list[0][7]
+        if (int(master_list[0][8],2) == knob5*4):
+            pr_printing[0] = master_list[0][7]
+        if (string == "over" and master_list[4][7] == -1 and master_list[3][7]==-1 and master_list[2][7]==-1 and master_list[1][7]==-1):  # full code completed
+            print("Code successfully executed")
+            break
+        else:
+            if master_list[4][7] != -1 and master_list[4][7] != -2:
+                write(master_list[4], regs, pr_mem[0],pr_mem[1],pr_mem[2],pr_mem[3])
+                #z=int(master_list[4][8],2)
+                #print(int(z/4))
+                window.tableWidget.setItem(k+t,count-1,QTableWidgetItem("Write_back"))
+                t=t+1
+                app_flag=1
+            
+            if master_list[3][7] != -1 and master_list[3][7] != -2:
+                pr_mem = mem_access(master_list[3], pr_exe[0],pr_exe[1],pr_exe[2])
+                window.tableWidget.setItem(k+t,count-1,QTableWidgetItem("Mem_Access"))
+                t=t+1
+                pr_mem = list(pr_mem)
+                pr_mem.append(pr_exe[3])
+                if pr_mem[1]=='LOADBYTE' or  pr_mem[1]=='LOADWORD':
+                    pr_mw[0] = pr_mem[0]
+                # pr_mw[1] = pr_mem[1]
+                if master_list[3][3] != 'NIL':
+                    pr_mw[1]=master_list[3][3]
+                if (int(master_list[3][8],2) == knob5*4):
+                    if pr_mem[1]=='LOADBYTE' or  pr_mem[1]=='LOADWORD':
+                        pr_printing[9] = pr_mem[0]
+                    if master_list[3][3] != 'NIL':
+                        pr_printing[10]=master_list[3][3]
+            
+            if master_list[2][7] != -1 and master_list[2][7] != -2:
+                pr_exe = execute(master_list[2], regs)
+                window.tableWidget.setItem(k+t,count-1,QTableWidgetItem("Execute"))
+                t=t+1
+                pr_exe = list(pr_exe)
+                pr_exe.append(-1)
+                # print('pr_exe ',pr_exe)
+                if pr_exe[0]!='NIL':
+                    pr_em[0] = com_32(str(pr_exe[0]))
+                if master_list[2][3] != 'NIL':
+                    pr_em[2]=master_list[2][3]
+                if  master_list[2][1] != 'NIL':
+                    pr_em[1]=regs[int(master_list[2][1],2)]
+                if master_list[2][2] != 'NIL':
+                    pr_de[3]=master_list[2][2]
+                if (int(master_list[2][8],2) == knob5*4):
+                    if pr_exe[0]!='NIL':
+                        pr_printing[5] = com_32(str(pr_exe[0]))
+                    if master_list[2][3] != 'NIL':
+                        pr_printing[6]=master_list[2][3]
+                    if  master_list[2][1] != 'NIL':
+                        pr_printing[7]=regs[int(master_list[2][1],2)]
+                    if master_list[2][2] != 'NIL':
+                        pr_printing[8]=master_list[2][2]
+                
+            if master_list[1][7] != -1 and master_list[1][7] != -2:
+                # print("decoding master_list[1]",master_list[1][9])
+                curr_pc = master_list[1][8]
+                bs1,bs2,bs3=decode(master_list[1],stallflag)        
+                window.tableWidget.setItem(k+t,count-1,QTableWidgetItem("Decode"))
+                t=t+1
+                hj=get_inst(master_list[1][7])
+                if hj_prev!=hj:
+                    hj=get_inst(master_list[1][7])
+                    item=QTableWidgetItem(hj)
+                    window.tableWidget.setVerticalHeaderItem(j,item)
+                    j=j+1
+                    hj_prev=hj
+                # print("Test : ",master_list[1][0],)
+                if master_list[1][0] != 'NIL':
+                    pr_de[0]=regs[int(master_list[1][0],2)]
+                if master_list[1][1] != 'NIL':
+                    pr_de[1]=regs[int(master_list[1][1],2)]
+                if master_list[1][3]!='NIL':
+                    pr_de[2]=master_list[1][3]
+                if master_list[1][2] != 'NIL':
+                    pr_de[3]=master_list[1][2]
+                if (int(master_list[1][8],2) == knob5*4):
+                    if master_list[1][0] != 'NIL':
+                        pr_printing[1]=regs[int(master_list[1][0],2)]
+                    if master_list[1][1] != 'NIL':
+                        pr_printing[2]=regs[int(master_list[1][1],2)]
+                    if master_list[1][3]!='NIL':
+                        pr_printing[3]=master_list[1][3]
+                    if master_list[1][2] != 'NIL':
+                        pr_printing[4]=master_list[1][2]
+            
+            else:
+                bs1,bs2,bs3 = -1,-1,[-1,-1]
+
+            print_pipelined(pr_fd,pr_de,pr_em,pr_mw,knob4,count)
+            printregs(knob3,count)
+            if master_list[4][8] != 'NIL' and int(master_list[4][8],2)==knob5*4:
+                printknob5(pr_printing,knob5)
+            
+            # for i in range(5):
+            #     if(master_list[i][8]!='NIL'):
+            #         print(i,"-->",master_list[i],' **** ',hex(int(master_list[i][8],2)))
+            #     else:
+            #         print(i,"-->",master_list[i],' **** ')
+            window.tableWidget.setItem(k+t,count-1,QTableWidgetItem("Fetch"))
+            if app_flag==1:
+                k=k+1
+                app_flag=0 
+
+            if(nextflagMM==1):
+                # print("inside nextFLAGMM\tpr_mem=",pr_mem)
+                regs[pr_mem[1]] = pr_mem[0]
+                pr_mem[3]='skip'
+                nextflagMM=0
+
+            if(nextflagMD==1): # 1 or 2 cycle stalls
+                # regs[pr_mem[1]] = pr_mem[0]
+                # print('just changed in MD',pr_mem[1], 'to',pr_mem[0] )
+                if(stallflag!=0):
+                    if(stallflag==2):
+                        regs[pr_mem[1]] = pr_mem[0]
+                        pr_mem[3]='skip'
+                        stalling(2)
+                    stallflag-=1
+
+                #print(">>> \t ENTER--->",list[9],"initial pc=",hex(int(list[8],2)))
+            
+            fetchedInst = master_list[0][7]
+            
+            if(returnlist[0]!=-1):
+                if   (returnlist[0][0]=='E' and returnlist[0][1]=='E'): 
+                    regs[pr_exe[1]] = pr_exe[0] #writing the value into the register 
+                    pr_exe[3]='skip'
+                
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='E'):
+                    if(returnlist[0][3]==[3,1]):
+                        # nextflagMM=1
+                        regs[pr_mem[1]] = pr_mem[0]
+                        pr_mem[3]='skip'
+                    elif(returnlist[0][3]==[2,1]):
+                        stalling(2)
+                        stallflag=1
+                        nextflagMM=1
+                        no_of_stalls+=1
+                        stalls_by_DF+=1
+                        # continue
+                
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='M'):
+                    nextflagMM=1
+                    
+                elif (returnlist[0][0]=='E' and returnlist[0][1]=='D'): #for branch resolution we need data at decode stage
+                    if(returnlist[0][3]==[2,1]): # 1 cycle stalls
+                        nextflagED=1
+                        stalling(2)
+                        regs[pr_exe[1]]=pr_exe[0] # we already have values from E stage of instruction at index 2
+                        stallflag=1
+                        no_of_stalls+=1
+                        stalls_by_DF+=1
+                        pr_exe[3]='skip'
+            
+                    elif(returnlist[0][3]==[3,1]): #no stall required
+                        regs[pr_mem[1]] = pr_mem[0] #as it was dependent on E stage of instruction at index 3 but it has now completed its memory stage so we can take regs value from it
+                        pr_mem[3]='skip'
+                
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='D'):
+                    if(returnlist[0][3]==[3,1]): # 1 cycle stalls
+                        stalling(2)
+                        stallflag=1
+                        nextflagMD=1
+                        regs[pr_mem[1]] = pr_mem[0] #because mem of 3rd is already done but we need a stall to decode the instruction again
+                        pr_mem[3]='skip'
+                        no_of_stalls+=1
+                        stalls_by_DF+=1
+                        
+                    elif(returnlist[0][3]==[2,1]): #2 cycle stalls
+                        stalling(2)
+                        nextflagMD=1
+                        stallflag=2
+                        no_of_stalls+=2
+                        stalls_by_DF+=2
+                        
+            
+            if lemme[1] == -1:                        
+                # print('lemme [1] == -1')
+                if ((bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR") and stallflag==0 and com_32(bin(int(master_list[0][8],2)-4)[2::])!=com_32(bs2) ):    
+                    flush_dada(bs2)
+                    flushflag=1
+                    no_of_stalls+=flushflag
+                    stalls_by_BP+=flushflag
+                    no_of_mispred+=1
+                elif((bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR") and stallflag==0 and com_32(bin(int(master_list[0][8],2)-4)[2::])==com_32(bs2)):
+                    insert_carr()
+                    continue
+            else:                                    
+                if ((bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR") and com_32(bin(int(master_list[0][8],2)-4)[2::])!=com_32(bs2) and stallflag==0):# and bin(int(master_list[0][8],2)-4)[2::]!=bs2):                          #predictin mesed up
+                    flush_dada(bs2)
+                    flushflag=1                   #flush it, call new target
+                    no_of_stalls+=flushflag
+                    stalls_by_BP+=flushflag
+                    no_of_mispred+=1
+                elif((bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR") and stallflag==0 and com_32(bin(int(master_list[0][8],2)-4)[2::])==com_32(bs2)):# bin(int(master_list[0][8],2)-4)[2::]==bs2):
+                    insert_carr()
+                    continue
+
+            # if(master_list[4][9]=='jalr'):
+            #     sys.exit()
+            
+            if(stallflag==0):
+                if(flushflag==0):
+                    insert_carr()
+                if lemme[0] != -1:                                  
+                    master_list[0][8] = lemme[0]                    
+                    # print("master_list[0][8], pc = ",master_list[0][8])
+                if(bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR"):
+                    update_bht(bin(int(curr_pc,2)-4)[2::],bs3[1],bs2)
+                    master_list[0][8] = bs2
+                   
+            if flushflag==1:
+                blank.append(j)
+            
+                if(fetchedInst!=-1 and fetchedInst!=-2):
+                    blank2.append(get_inst(fetchedInst))
+                else:
+                    blank2.append('NONONO')
+                blank3.append(count)
+            flushflag=0
+            elapsed = time.time()-start
+            # print('register x1 =',regs[1])
+                    
+    if(elapsed > 60):
+        print("Something is wrong, program took too long too execute, might be an infinite loop")
