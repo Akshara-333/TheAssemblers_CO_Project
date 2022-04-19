@@ -1,0 +1,32 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    We attempted to develop a RISC V SIMULATOR using python
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+What we tried in the project :
+-Phase1.py contains implementation of instruction set, dictionaries,labels and data.
+     - Defined command function for .word
+     - Defined memory class to implement functions
+     - Defined adddata to remove "," " " and for directives
+     - Defined add_text to append values
+     - Defined Memo to print data segment and text segment
+     - Defined get_reg for fetching registers
+     - Defined get_command to implement labels 
+     - Defined get_directives to open the input file 
+     - Defined covertToMC 
+     - Bubblesort.asm file is a test case file
+-Phase2.py contains incorporation of pipelining,data forwading and info regarding stalls
+     - Defined printregisters 
+     - Defined extract to extract the signed the values
+     - Defined convert to convert the signed value
+     - Defined get_inst
+     - Defined getIR to read file
+     - Defined fetch,decode,execute,mem_access,write
+     - Defined run to print number of cycles per instructions,number of stalls(non pipelined run)
+     - Defined run_pipelined_data_for pipe line execution with data forwarding and priniting number of cycles per instructions,number of stalls
+     - Defined run_pipelined_without_data_for without data forwarding
+     - Defined class window for creating table using PyQt5
+     - Defined printDict for printing table
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Problems we couldn't fix :
+     - Cannot open input file
+     - Failed to implement GUI using PyQt5
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
