@@ -1330,3 +1330,362 @@ def run_pipelined_data_for():
                     
     if(elapsed > 60):
         print("Something is wrong, program took too long too execute, might be an infinite loop")
+print("---------Pipelined Execution with DF enabled--------")
+    print("1.  Total Number of cycles taken\t:",count-1)
+    print('2.  Number of instructions executed\t:',no_of_inst)
+    print('3.  Cycles Per Instruction (CPI)\t:',(count-1)/no_of_inst)
+    print("4.  Number of Stalls in the pipeline\t:",no_of_stalls)
+    
+    fd=0
+    for sam in blank:
+        window.tableWidget.insertRow(sam+fd)
+        #fd+=1
+        item=QtWidgets.QTableWidgetItem("WRONG FETCH "+blank2[fd])
+        #item.setBackground(QtGui.QColor(255,0,0))
+        #self.table.selectRow(j)
+        vaal1 = window.tableWidget.item(sam+fd+1,blank3[fd]-1)
+        vaal2 = window.tableWidget.item(sam+fd+1,blank3[fd]-2)
+        # print(vaal1,vaal1.text(),vaal2)
+        if(vaal1!=None):
+            window.tableWidget.setItem(sam+fd,blank3[fd]-1,QTableWidgetItem(vaal1.text()))
+            window.tableWidget.item(sam+fd,blank3[fd]-1).setBackground(QtGui.QColor(255,0,0))
+            window.tableWidget.setItem(sam+fd+1,blank3[fd]-1,QTableWidgetItem(''))
+        if(vaal2!=None):
+            window.tableWidget.setItem(sam+fd,blank3[fd]-2,QTableWidgetItem(vaal2.text()))
+            window.tableWidget.item(sam+fd,blank3[fd]-2).setBackground(QtGui.QColor(255,0,0))
+            window.tableWidget.setItem(sam+fd+1,blank3[fd]-2,QTableWidgetItem(''))  
+        window.tableWidget.setVerticalHeaderItem(sam+fd,item)
+        
+        fd+=1
+    print(blank)
+    print(blank2)
+    #exit()
+    
+    myfile.write("\n---------Pipelined Execution with DF enabled--------")
+    myfile.write("\n1.  Total Number of cycles taken\t\t: "+str(count-1))
+    myfile.write('\n2.  Number of instructions executed\t\t: '+str(no_of_inst))
+    myfile.write('\n3.  Cycles Per Instruction (CPI)\t\t: '+ str((count-1)/no_of_inst))
+    myfile.write("\n4.  Number of Stalls in the pipeline\t: "+str(no_of_stalls))
+   
+
+def nstalling(i):                # i is index above it should continue as usual
+    master_list.pop(0)
+    master_list[0][8]=master_list[1][8]
+    master_list.insert(i, ['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'NIL','NIL'])
+    # master_list[i][7] = -2
+
+def run_pipelined_without_data_for():
+    print("enter")
+    rfile=open("outfile.mc","r+")
+    bc=rfile.readlines()
+    app_flag = 0
+    j,k=0,0
+    flag = 0
+    start = time.time()
+    elapsed = 0
+    count = 0
+    lemme=[-1,-1]
+    pr_mem = ['nil','nil','nil'] #pipeline register for decode stage
+    pr_exe = ['nil','nil','nil']
+    pr_printing = ['0','0','0','0','0','0','0','0','0','0','0'] 
+    pr_fd = ['0']
+    pr_de = ['0','0','0','0'] 
+    pr_em = ['0','0','0','0'] 
+    pr_mw = ['0','0']
+    nextflagMM=0
+    
+    changer=[-1,-1]
+    stat1=0   #Total number of cycles
+    stat2=0   #total instructions executed
+    stat3=0   #CPI
+    stat4=0   #Number of stalls in the pipeline
+    stat5=0   #Number of branch mispredictions
+    stat6=0    #number of stalls due to data hazards
+    stat7=0   #Number of stalls due to control hazards
+    t=0
+    kkpk=0
+    previous='nil'
+    print("master_list")
+    for i in range(5):
+        print(i,"-->",master_list[i])
+    while elapsed < 30:
+        t=0
+        stat1=stat1+1
+        changer[0]=master_list[0][8]
+        # print(master_list[0][8])
+        z_prev=int(master_list[0][8],2)
+        string,lemme[0]=fetch(master_list[0],0)           #POOP#lemme[0] is -1 if no branching found, else it represents next pc(target)
+        
+        # print(string,lemme[0])
+        if master_list[0][7]!='NIL' and master_list[0][7]!=-1:
+            pr_fd[0] = master_list[0][7]
+        if (int(master_list[0][8],2) == knob5*4):
+            pr_printing[0] = master_list[0][7]
+        #lemme[1]=lemme[0]
+        if string == "over" and master_list[4][7] == -1:  # full code completed
+            print("Code successfully executed")
+            break
+        else:
+            # st=fetch(master_list[0])
+            #if lemme[0] != -1:                                  #wow we predicted something
+            #    master_list[0][8] = lemme[0]                    #pc set as new pc
+            if master_list[4][7] != -1 and master_list[4][7] != -2:
+                write(master_list[4], regs, pr_mem[0],pr_mem[1],pr_mem[2])
+                window.tableWidget.setItem(k+t,stat1-1,QTableWidgetItem("Write_back"))
+                t=t+1
+                app_flag=1
+                hj=get_inst(master_list[4][7])
+                item=QTableWidgetItem(hj)
+                window.tableWidget.setVerticalHeaderItem(j,item)
+                j=j+1
+                stat2=stat2+1
+                abc=master_list[4][6]
+            if master_list[3][7] != -1 and master_list[3][7] != -2:
+                pr_mem = mem_access(master_list[3], pr_exe[0],pr_exe[1],pr_exe[2])
+                #print(t,k)
+                window.tableWidget.setItem(k+t,stat1-1,QTableWidgetItem("Mem_Access"))
+                t=t+1
+                #print(">>> \t ENTER--->",master_list[4][9],"initial pc=",master_list[4][8])
+                # print("pr_mem =",pr_mem)
+            if master_list[2][7] != -1 and master_list[2][7] != -2:
+                pr_exe = execute(master_list[2], regs)
+                window.tableWidget.setItem(k+t,stat1-1,QTableWidgetItem("Execute"))
+                t=t+1
+                if pr_exe[0]!='NIL':
+                    pr_em[0] = com_32(str(pr_exe[0]))
+                if master_list[2][3] != 'NIL':
+                    pr_em[2]=master_list[2][3]
+                if  master_list[2][1] != 'NIL':
+                    pr_em[1]=regs[int(master_list[2][1],2)]
+                if master_list[2][2] != 'NIL':
+                    pr_de[3]=master_list[2][2]
+                if (int(master_list[2][8],2) == knob5*4):
+                    if pr_exe[0]!='NIL':
+                        pr_printing[5] = com_32(str(pr_exe[0]))
+                    if master_list[2][3] != 'NIL':
+                        pr_printing[6]=master_list[2][3]
+                    if  master_list[2][1] != 'NIL':
+                        pr_printing[7]=regs[int(master_list[2][1],2)]
+                    if master_list[2][2] != 'NIL':
+                        pr_printing[8]=master_list[2][2]
+                # print("pr_exe =",pr_exe)
+            if master_list[1][7] != -1 and master_list[1][7] != -2:
+                bs1,bs2,bs3=decode(master_list[1],0)        #bs1 tells if predition right or wrong, bs2 is target, bs3 tells type
+                bs2=bin(int(bs2,2)).replace("0b","")
+                window.tableWidget.setItem(k+t,stat1-1,QTableWidgetItem("Decode"))
+                t=t+1
+                if master_list[1][0] != 'NIL':
+                    pr_de[0]=regs[int(master_list[1][0],2)]
+                if master_list[1][1] != 'NIL':
+                    pr_de[1]=regs[int(master_list[1][1],2)]
+                if master_list[1][3]!='NIL':
+                    pr_de[2]=master_list[1][3]
+                if master_list[1][2] != 'NIL':
+                    pr_de[3]=master_list[1][2]
+                if (int(master_list[1][8],2) == knob5*4):
+                    if master_list[1][0] != 'NIL':
+                        pr_printing[1]=regs[int(master_list[1][0],2)]
+                    if master_list[1][1] != 'NIL':
+                        pr_printing[2]=regs[int(master_list[1][1],2)]
+                    if master_list[1][3]!='NIL':
+                        pr_printing[3]=master_list[1][3]
+                    if master_list[1][2] != 'NIL':
+                        pr_printing[4]=master_list[1][2]
+                if bs3[0] == "SB" or bs3[0] == "JAL" or bs3[0] == "JALR":
+                    
+                    if lemme[1]!=bs2:
+                        flag=bs2
+                        if bs3[0]=="JAL" or bs3[0]=="JALR":
+                            count+=1
+                        if bs3[0]=="SB" and lemme[1]!=-1:
+                            if (changer[1] in ch.keys()) and ch[changer[1]]==1:
+                                # print("enter1")
+                                count+=1
+                                update_bht(changer[1],0,-1)
+                            elif (changer[1] in ch.keys()) and ch[changer[1]]==0 :
+                                # print("enter2")
+                                count+=1
+                                update_bht(changer[1],1,-1)
+                        #print("prediction is not correct")
+                        # print(ch,changer[1],ab)
+                    else:
+                        print()
+                        #count+=1
+                        #nextflagMM+=1
+
+            window.tableWidget.setItem(k+t,stat1-1,QTableWidgetItem("Fetch"))
+            if app_flag==1:
+                k=k+1
+                app_flag=0    
+            changer[1]=changer[0]
+            returnlist = detect_data_hazard()
+            # print(master_list[1])
+            insert_carr()
+            if flag!=0:
+                stat7+=1
+                master_list.pop(1)
+                master_list.insert(1,['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'NIL','NIL'])
+                master_list[0][8]=flag
+                flag=0
+            if(returnlist[0]!=-1):
+                stat6+=1
+            #else:
+            #    insert_carr()
+                if (returnlist[0][0]=='E'and returnlist[0][1]=='E'):  # case- E to E
+                    nstalling(2)
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='E'):
+                    if(returnlist[0][3]==[3,1]):
+                        nstalling(2)
+                        nextflagMM+=1
+                    elif(returnlist[0][3]==[2,1]):
+                        nstalling(2)
+                        #nextflagMM=1
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='M'):
+                    # print ("enter")
+                    nstalling(2)
+                elif(returnlist[0][0]=='E' and returnlist[0][1]=='M'):
+                    regs[pr_exe[1]] = pr_exe[0]
+                    #exit()
+                elif (returnlist[0][0]=='E' and returnlist[0][1]=='D'):
+                    if(returnlist[0][3]==[2,1]): # 1 cycle stalls
+                        #nextflagED=1
+                        nstalling(2)
+                        #stallflag=1
+                        #continue
+                    elif(returnlist[0][3]==[3,1]): #no stall required
+                        nextflagMM+=1
+                        nstalling(2)
+                elif (returnlist[0][0]=='M' and returnlist[0][1]=='D' ):
+                    if(returnlist[0][3]==[3,1]): # 1 cycle stalls
+                        nstalling(2)
+                        nextflagMM+=1
+                        #stallflag=1
+                        #nextflagMD=1
+                        #continue
+                    elif(returnlist[0][3]==[2,1]): #2 cycle stalls
+                        nstalling(2)
+            elapsed = time.time()-start
+            if lemme[0]!=-1:
+                master_list[0][8]=lemme[0]
+            lemme[1]=lemme[0]
+        print_pipelined(pr_fd,pr_de,pr_em,pr_mw,knob4,stat1)
+        printregs(knob3,stat1)
+        if master_list[4][8] != 'NIL' and int(master_list[4][8],2)==knob5*4:
+            printknob5(pr_printing,knob5)
+    if(elapsed > 30):
+        print("Something is wrong, program took too long too execute, might be an infinite loop")
+    stat7=count
+    stat5=stat7
+    stat3=(stat1-1)/stat2
+    stat4=stat6+stat7
+
+    print("-------Pipelined Execution with DF disabled-----")
+    print("1.  Total Number of cycles taken\t:",stat1-1)
+    print("2.  total instructions executed\t\t:",stat2)
+    print("3.  Cycle Per Instruction (CPI)\t\t:",stat3)
+    print("4.  Number of stalls in the pipeline\t:",stat4)
+    myfile.write("---------Pipelined Execution with DF disabled-------\n"+"STATS OF THE PROGRAM\n1.  Total Number of cycles taken\t\t: "+str(stat1-1)+"\n2.  total instructions executed\t\t\t: "+str(stat2)+"\n3.  Cycle Per Instruction (CPI)\t\t\t: "+str(stat3)+"\n4.  Number of stalls in the pipeline\t: "+str(stat4))
+class Window(QWidget):
+    
+    def creatingTables(self):
+        #self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(1000)
+        self.tableWidget.setColumnCount(1500)
+        self.vBoxLayout = QVBoxLayout()
+        self.vBoxLayout.addWidget(self.tableWidget)
+        self.setLayout(self.vBoxLayout)
+        #self.table.selectRow(j)
+        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+print("Enter your choice for mode of running the program,\nenter 1 to enable and 0 to disable the following knobs")
+knob1 = int(input(">>>\tKNOB 1:: Pipelined Execution (0/1): "))
+myfile.write(">>>\tKNOB 1:: Pipelined Execution (0/1): "+ str(knob1))
+if(knob1==1):
+    knob2 = int(input(">>>\tKNOB 2:: data forwarding    (0/1) : "))
+    myfile.write("\n>>>\tKNOB 2:: data forwarding     (0/1): "+str(knob2))
+else:
+    print(">>>\tKNOB 2:: data forwarding    (0/1):  N.A ")
+    myfile.write("\n>>>\tKNOB 2:: data forwarding     (0/1): N.A.")
+knob3 = int(input(">>>\tKNOB 3:: Print regs at the end of each cycle(0/1) : "))
+myfile.write("\n>>>\tKNOB 3:: Print regs at the end of each cycle(0/1) : "+str(knob3))
+if(knob1==1):
+    knob4 = int(input(">>>\tKNOB 4:: Print Pipelined regs at the end of each cycle(0/1) : "))
+    myfile.write("\n>>>\tKNOB 4:: Print Pipelined regs at the end of each cycle(0/1) : "+str(knob4))
+else:
+    print(">>>\tKNOB 4:: Print Pipelined regs at the end of each cycle(0/1) : N.A.")
+    myfile.write("\n>>>\tKNOB 4:: Print Pipelined regs at the end of each cycle(0/1) : N.A.")
+knob5 = int(input(">>>\tKNOB 5:: Print Pipelined regs for a specific instruction (Enter Instruction Number or enter -1 for not printing) : "))
+myfile.write("\n>>>\tKNOB 5:: Print Pipelined regs for a specific instruction (Enter Instruction Number or enter -1 for not printing) : ")
+if(knob1==1):
+    myfile.write(str(knob5))
+else:
+    myfile.write('N.A.')
+if(knob1==0):
+    App = QApplication(sys.argv)
+    window = Window()
+    run(['NIL','NIL','NIL','NIL','NIL','NIL','NIL',-2,'00000000000000000000000000000000','NIL'])
+    sys.exit(App.exec())
+    
+elif(knob2==0):
+    App = QApplication(sys.argv)
+    window = Window()
+    run_pipelined_without_data_for()
+    window.tableWidget.resizeColumnsToContents()
+    sys.exit(App.exec())
+    print(ab)
+    print(ch)
+elif(knob2==1):
+    App = QApplication(sys.argv)
+    window = Window()
+    run_pipelined_data_for()
+    window.tableWidget.resizeColumnsToContents()
+    sys.exit(App.exec())
+# step()
+# print(regs)
+for i in range(32):
+    print(regs[i],'\tx',i, ' = ','0x'+(hex(int(regs[i],2))[2::].zfill(8)),sep='')
+    if(i<=9):
+        myfile.write('\n x'+str(i)+'  = '+'0x'+(hex(int(regs[i],2))[2::].zfill(8)))
+    else:
+        myfile.write('\n x'+str(i)+' = '+'0x'+(hex(int(regs[i],2))[2::].zfill(8)))
+
+def printDict(dicto,order='asc'):
+    j=0
+    print('------------------+-------------------+-------------------+-------------------+')
+    print('     add    : val |     add     : val |     add     : val |     add     : val |')
+    print('------------------+-------------------+-------------------+-------------------+')
+    myfile.write('\n----------------+-----------------+-----------------+-----------------+\n    add   : val |    add    : val |    add    : val |    add    : val |\n----------------+-----------------+-----------------+-----------------+\n')
+    if(order=='asc'):
+        for i in sorted(dicto.keys()):
+            j+=1
+            print(i,' : ',dicto[i],end=' | ')
+            if(j==4):
+                j=0
+                print('')
+        print('---------------------------------------------------------------------------')
+        myfile.write('----------------+-----------------+-----------------+-----------------+\n\n')
+    else:
+        ll=[]
+        for i in sorted(dicto.keys(),reverse=True):
+            j+=1
+            ll.append(i)
+            # print(i,': ',dicto[i],end=' | ')
+            if(j==4):
+                j=0
+                for kkk in [3,2,1,0]:
+                    print(ll[kkk],' : ',dicto[ll[kkk]],end=' | ')
+                    myfile.write(str(ll[kkk]) + ': '+str(dicto[ll[kkk]])+ '  | ')
+                ll=[]
+                print('')
+                myfile.write('\n')
+        print('------------------------------------------------------------------------------\n\n')
+        myfile.write('----------------+-----------------+-----------------+-----------------+\n\n')
+oppo1,oppo2=mem.show_Memory()
+
+# print(stack)
+myfile.write('\n\n================================================== MEMORY SEGMENT ==================================================\n NOTE:\n1. All values in following tables are in hex format\n2. Values and address not displayed have a default "00" value\n')
+myfile.write('\n                              DATA SEGMENT')
+
+printDict(oppo2,'desc')
+myfile.write('\n                             STACK SEGMENT')
+printDict(stack,'desc')
+myfile.close()
